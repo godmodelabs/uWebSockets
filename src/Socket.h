@@ -151,7 +151,7 @@ protected:
         }
 
         if (!socket->messageQueue.empty() && ((events & UV_WRITABLE) || SSL_want(socket->ssl) == SSL_READING)) {
-            socket->cork(true);
+            socket->autoCork(true);
             while (true) {
                 Queue::Message *messagePtr = socket->messageQueue.front();
                 int sent = SSL_write(socket->ssl, messagePtr->data, (int) messagePtr->length);
@@ -182,7 +182,7 @@ protected:
                     break;
                 }
             }
-            socket->cork(false);
+            socket->autoCork(false);
         }
 
         if (events & UV_READABLE) {
@@ -226,7 +226,7 @@ protected:
 
         if (events & UV_WRITABLE) {
             if (!socket->messageQueue.empty() && (events & UV_WRITABLE)) {
-                socket->cork(true);
+                socket->autoCork(true);
                 while (true) {
                     Queue::Message *messagePtr = socket->messageQueue.front();
                     ssize_t sent = ::send(socket->getFd(), messagePtr->data, messagePtr->length, MSG_NOSIGNAL);
@@ -252,7 +252,7 @@ protected:
                         break;
                     }
                 }
-                socket->cork(false);
+                socket->autoCork(false);
             }
         }
 
@@ -457,6 +457,10 @@ public:
             ::send(getFd(), "", 0, MSG_NOSIGNAL);
         }
 #endif
+    }
+
+    void autoCork(int enable) {
+        // TODO
     }
 
     void shutdown() {

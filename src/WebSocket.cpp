@@ -193,10 +193,10 @@ uS::Socket *WebSocket<isServer>::onData(uS::Socket *s, char *data, size_t length
 
     webSocket->hasOutstandingPong = false;
     if (!webSocket->isShuttingDown()) {
-        webSocket->cork(true);
+        webSocket->autoCork(true);
         WebSocketProtocol<isServer, WebSocket<isServer>>::consume(data, (unsigned int) length, webSocket);
         if (!webSocket->isClosed()) {
-            webSocket->cork(false);
+            webSocket->autoCork(false);
         }
     }
 
