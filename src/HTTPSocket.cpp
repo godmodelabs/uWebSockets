@@ -56,7 +56,7 @@ template <bool isServer>
 uS::Socket *HttpSocket<isServer>::onData(uS::Socket *s, char *data, size_t length) {
     HttpSocket<isServer> *httpSocket = (HttpSocket<isServer> *) s;
 
-    httpSocket->cork(true);
+    httpSocket->autoCork(true);
 
     if (httpSocket->contentLength) {
         httpSocket->missedDeadline = false;
@@ -114,10 +114,10 @@ uS::Socket *HttpSocket<isServer>::onData(uS::Socket *s, char *data, size_t lengt
                             webSocket->change(webSocket->nodeData->loop, webSocket, webSocket->setPoll(UV_READABLE));
                             Group<isServer>::from(webSocket)->addWebSocket(webSocket);
 
-                            webSocket->cork(true);
+                            webSocket->autoCork(true);
                             Group<isServer>::from(webSocket)->connectionHandler(webSocket, req);
                             // todo: should not uncork if closed!
-                            webSocket->cork(false);
+                            webSocket->autoCork(false);
                             delete httpSocket;
 
                             return webSocket;
@@ -166,12 +166,12 @@ uS::Socket *HttpSocket<isServer>::onData(uS::Socket *s, char *data, size_t lengt
                     webSocket->change(webSocket->nodeData->loop, webSocket, webSocket->setPoll(UV_READABLE));
                     Group<isServer>::from(webSocket)->addWebSocket(webSocket);
 
-                    webSocket->cork(true);
+                    webSocket->autoCork(true);
                     Group<isServer>::from(webSocket)->connectionHandler(webSocket, req);
                     if (!(webSocket->isClosed() || webSocket->isShuttingDown())) {
                         WebSocketProtocol<isServer, WebSocket<isServer>>::consume(cursor, (unsigned int) (end - cursor), webSocket);
                     }
-                    webSocket->cork(false);
+                    webSocket->autoCork(false);
                     delete httpSocket;
 
                     return webSocket;
@@ -192,7 +192,7 @@ uS::Socket *HttpSocket<isServer>::onData(uS::Socket *s, char *data, size_t lengt
         }
     } while(cursor != end);
 
-    httpSocket->cork(false);
+    httpSocket->autoCork(false);
     httpSocket->httpBuffer.clear();
 
     return httpSocket;
