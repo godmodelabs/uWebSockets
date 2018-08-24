@@ -6,7 +6,7 @@
 namespace uWS {
 
 z_stream *Hub::allocateDefaultCompressor(z_stream *zStream) {
-    deflateInit2(zStream, 1, Z_DEFLATED, -9, 1, Z_DEFAULT_STRATEGY);
+    deflateInit2(zStream, 1, Z_DEFLATED, -11, 3, Z_DEFAULT_STRATEGY);
     return zStream;
 }
 
