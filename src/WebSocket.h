@@ -22,6 +22,8 @@ protected:
         COMPRESSED_FRAME
     } compressionStatus;
     unsigned char controlTipLength = 0, hasOutstandingPong = false;
+    size_t payloadBytesRecv = 0;
+    size_t payloadBytesSent = 0;
 
     void *slidingDeflateWindow = nullptr;
 
@@ -76,6 +78,9 @@ public:
     static PreparedMessage *prepareMessage(char *data, size_t length, OpCode opCode, bool compressed, void(*callback)(WebSocket<isServer> *webSocket, void *data, bool cancelled, void *reserved) = nullptr);
     static PreparedMessage *prepareMessageBatch(std::vector<std::string> &messages, std::vector<int> &excludedMessages,
                                                 OpCode opCode, bool compressed, void(*callback)(WebSocket<isServer> *webSocket, void *data, bool cancelled, void *reserved) = nullptr);
+
+    size_t getPayloadBytesRecv() { return payloadBytesRecv; }
+    size_t getPayloadBytesSent() { return payloadBytesSent; }
 
     friend struct Hub;
     friend struct Group<isServer>;
