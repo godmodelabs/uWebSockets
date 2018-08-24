@@ -475,6 +475,10 @@ public:
         return bytesSent;
     }
 
+    SSL* getSslFd() {
+        return ssl;
+    }
+
     void shutdown() {
         if (ssl) {
             //todo: poll in/out - have the io_cb recall shutdown if failed
