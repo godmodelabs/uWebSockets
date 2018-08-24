@@ -33,6 +33,8 @@ protected:
     SSL *ssl;
     void *user = nullptr;
     NodeData *nodeData;
+    ssize_t bytesRecv = 0;
+    ssize_t bytesSent = 0;
 
     // this is not needed by HttpSocket!
     struct Queue {
@@ -155,6 +157,7 @@ protected:
             while (true) {
                 Queue::Message *messagePtr = socket->messageQueue.front();
                 int sent = SSL_write(socket->ssl, messagePtr->data, (int) messagePtr->length);
+                socket->bytesSent += sent > 0 ? sent : 0;
                 if (sent == (ssize_t) messagePtr->length) {
                     if (messagePtr->callback) {
                         messagePtr->callback(p, messagePtr->callbackData, false, messagePtr->reserved);
@@ -203,6 +206,7 @@ protected:
                     }
                     break;
                 } else {
+                    socket->bytesRecv += length;
                     // Warning: onData can delete the socket! Happens when HttpSocket upgrades
                     socket = STATE::onData((Socket *) p, socket->nodeData->recvBuffer, length);
                     if (socket->isClosed() || socket->isShuttingDown()) {
@@ -230,6 +234,7 @@ protected:
                 while (true) {
                     Queue::Message *messagePtr = socket->messageQueue.front();
                     ssize_t sent = ::send(socket->getFd(), messagePtr->data, messagePtr->length, MSG_NOSIGNAL);
+                    socket->bytesSent += sent > 0 ? sent : 0;
                     if (sent == (ssize_t) messagePtr->length) {
                         if (messagePtr->callback) {
                             messagePtr->callback(p, messagePtr->callbackData, false, messagePtr->reserved);
@@ -259,6 +264,7 @@ protected:
         if (events & UV_READABLE) {
             int length = (int) recv(socket->getFd(), nodeData->recvBuffer, nodeData->recvLength, 0);
             if (length > 0) {
+                socket->bytesRecv += length;
                 STATE::onData((Socket *) p, nodeData->recvBuffer, length);
             } else if (length <= 0 || (length == SOCKET_ERROR && !netContext->wouldBlock())) {
                 STATE::onEnd((Socket *) p);
@@ -307,6 +313,7 @@ protected:
 
             if (ssl) {
                 sent = SSL_write(ssl, message->data, (int) message->length);
+                bytesSent += sent > 0 ? sent : 0;
                 if (sent == (ssize_t) message->length) {
                     wasTransferred = false;
                     return true;
@@ -326,6 +333,7 @@ protected:
                 }
             } else {
                 sent = ::send(getFd(), message->data, message->length, MSG_NOSIGNAL);
+                bytesSent += sent > 0 ? sent : 0;
                 if (sent == (ssize_t) message->length) {
                     wasTransferred = false;
                     return true;
@@ -461,6 +469,18 @@ public:
 
     void autoCork(int enable) {
         // TODO
+    }
+
+    size_t getBytesRecv() {
+        return bytesRecv;
+    }
+
+    size_t getBytesSent() {
+        return bytesSent;
+    }
+
+    SSL* getSslFd() {
+        return ssl;
     }
 
     void shutdown() {

@@ -52,9 +52,11 @@ void WebSocket<isServer>::send(const char *message, size_t length, OpCode opCode
         static size_t transform(const char *src, char *dst, size_t length, TransformData transformData) {
             if (transformData.compress) {
                 char *deflated = Group<isServer>::from(transformData.s)->hub->deflate((char *) src, length, (z_stream *) transformData.s->slidingDeflateWindow);
+                transformData.s->payloadBytesSent += length;
                 return WebSocketProtocol<isServer, WebSocket<isServer>>::formatMessage(dst, deflated, length, transformData.opCode, length, true);
             }
 
+            transformData.s->payloadBytesSent += length;
             return WebSocketProtocol<isServer, WebSocket<isServer>>::formatMessage(dst, src, length, transformData.opCode, length, false);
         }
     };
@@ -321,6 +323,8 @@ template <bool isServer>
 bool WebSocket<isServer>::handleFragment(char *data, size_t length, unsigned int remainingBytes, int opCode, bool fin, WebSocketState<isServer> *webSocketState) {
     WebSocket<isServer> *webSocket = static_cast<WebSocket<isServer> *>(webSocketState);
     Group<isServer> *group = Group<isServer>::from(webSocket);
+
+    webSocket->payloadBytesRecv += length;
 
     if (opCode < 3) {
         if (!remainingBytes && fin && !webSocket->fragmentBuffer.length()) {
