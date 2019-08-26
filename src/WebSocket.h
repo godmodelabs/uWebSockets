@@ -49,6 +49,8 @@ public:
     /* See AsyncSocket */
     using Super::getBufferedAmount;
     using Super::getRemoteAddress;
+    using Super::cork;
+    using Super::uncork;
 
     /* Simple, immediate close of the socket. Emits close event */
     using Super::close;
