@@ -30,8 +30,7 @@
 
 namespace uWS {
 
-/* Compress options (really more like PerMessageDeflateOptions) */
-enum CompressOptions {
+enum CompressorType {
     /* Compression disabled */
     DISABLED = 0,
     /* We compress using a shared non-sliding window. No added memory usage, worse compression. */
@@ -86,7 +85,8 @@ public:
     }
 
     struct WebSocketBehavior {
-        CompressOptions compression = DISABLED;
+        CompressorType compression = DISABLED;
+        CompressorOptions compressorOptions;
         int maxPayloadLength = 16 * 1024;
         int idleTimeout = 120;
         fu2::unique_function<void(uWS::WebSocket<SSL, true> *, HttpRequest *)> open = nullptr;
@@ -207,7 +207,7 @@ public:
 
                 /* Initialize websocket with any moved backpressure intact */
                 httpContext->upgradeToWebSocket(
-                            webSocket->init(perMessageDeflate, slidingDeflateWindow, std::move(backpressure))
+                            webSocket->init(perMessageDeflate, slidingDeflateWindow, behavior.compressorOptions, std::move(backpressure))
                             );
 
                 /* Emit open event and start the timeout */
